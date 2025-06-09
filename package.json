@@ -1,0 +1,52 @@
+{
+  "name": "n8n-zip-to-github-workflow",
+  "version": "1.0.0",
+  "description": "基于n8n的自动化工作流：监听Google Drive ZIP文件上传，解压缩并自动推送到GitHub仓库",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "lint": "eslint src/",
+    "format": "prettier --write src/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joseph19820124/n8n-zip-to-github-workflow.git"
+  },
+  "keywords": [
+    "n8n",
+    "automation",
+    "workflow",
+    "github",
+    "google-drive",
+    "zip",
+    "file-processing",
+    "ai-agent",
+    "mcp"
+  ],
+  "author": "Joseph19820124",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Joseph19820124/n8n-zip-to-github-workflow/issues"
+  },
+  "homepage": "https://github.com/Joseph19820124/n8n-zip-to-github-workflow#readme",
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "node-fetch": "^3.3.2",
+    "lodash": "^4.17.21",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0",
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "peerDependencies": {
+    "n8n": ">=1.0.0"
+  }
+}
