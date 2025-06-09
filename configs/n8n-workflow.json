@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "instanceId": "n8n-zip-github-automation"
+  },
+  "name": "ZIP解压并推送到GitHub - 完整自动化工作流",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "watch",
+        "watchFor": "file",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "{{ process.env.GOOGLE_DRIVE_SOURCE_FOLDER_ID }}",
+          "mode": "id"
+        },
+        "options": {
+          "fileTypes": ["application/zip", "application/x-zip-compressed"]
+        }
+      },
+      "id": "google_drive_trigger",
+      "name": "Google Drive ZIP文件监听",
+      "type": "@n8n/n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 3,
+      "position": [240, 300],
+      "webhookId": "auto-generated-webhook-id"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "file_type_check",
+              "leftValue": "={{ $node['Google Drive ZIP文件监听'].json['mimeType'] }}",
+              "rightValue": "application/zip",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "file_size_check",
+              "leftValue": "={{ $node['Google Drive ZIP文件监听'].json['size'] }}",
+              "rightValue": 104857600,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "validate_file",
+      "name": "验证文件类型和大小",
+      "type": "@n8n/n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "download",
+        "fileId": "={{ $node['Google Drive ZIP文件监听'].json['id'] }}",
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "txt",
+              "sheetsToFormat": "csv",
+              "slidesToFormat": "txt"
+            }
+          }
+        }
+      },
+      "id": "download_zip",
+      "name": "下载ZIP文件",
+      "type": "@n8n/n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "code": "// 请参考 src/unzip-code.js 文件中的完整实现"
+      },
+      "id": "unzip_files",
+      "name": "解压缩文件",
+      "type": "@n8n/n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "folder",
+        "operation": "create",
+        "name": "={{ $node['解压缩文件'].json['folderName'] }}",
+        "folderId": {
+          "__rl": true,
+          "value": "{{ process.env.GOOGLE_DRIVE_TARGET_FOLDER_ID }}",
+          "mode": "id"
+        }
+      },
+      "id": "create_gdrive_folder",
+      "name": "创建Google Drive文件夹",
+      "type": "@n8n/n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "code": "// 请参考 src/github-agent.js 文件中的完整实现"
+      },
+      "id": "github_integration",
+      "name": "GitHub集成处理",
+      "type": "@n8n/n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "{{ process.env.NOTIFICATION_EMAIL_FROM }}",
+        "toEmail": "{{ process.env.NOTIFICATION_EMAIL_TO }}",
+        "subject": "✅ ZIP文件处理完成通知",
+        "message": "处理完成！详细信息请查看GitHub仓库。"
+      },
+      "id": "send_notification",
+      "name": "发送完成通知",
+      "type": "@n8n/n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Google Drive ZIP文件监听": {
+      "main": [
+        [
+          {
+            "node": "验证文件类型和大小",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "验证文件类型和大小": {
+      "main": [
+        [
+          {
+            "node": "下载ZIP文件",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载ZIP文件": {
+      "main": [
+        [
+          {
+            "node": "解压缩文件",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解压缩文件": {
+      "main": [
+        [
+          {
+            "node": "创建Google Drive文件夹",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "创建Google Drive文件夹": {
+      "main": [
+        [
+          {
+            "node": "GitHub集成处理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub集成处理": {
+      "main": [
+        [
+          {
+            "node": "发送完成通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-06-10T00:00:00.000Z",
+      "updatedAt": "2024-06-10T00:00:00.000Z",
+      "id": "auto_file_processing",
+      "name": "自动文件处理"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-06-10T00:00:00.000Z",
+  "versionId": "1"
+}
